@@ -26,6 +26,7 @@
     },
     "dependencies": {
         "Carbon": "^0.3.6",
+        "cors": "^2.8.5",
         "faker": "^6.6.6",
         "Faker": "^0.7.2"
     }

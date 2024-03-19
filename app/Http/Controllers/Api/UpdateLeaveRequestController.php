@@ -2,15 +2,22 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\LeaveRequests;
+use App\Models\UpdateLeaveRequests;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class LeaveRequestController extends Controller
+class UpdateLeaveRequestController extends Controller
 { 
+
     public function index()
     {
-        $leaveRequests = LeaveRequests::all();
+        return response()->json("update Request");
+
+        $request->validate([
+            'field1' => 'required',
+            'field2' => 'required',
+            // Add more validation rules as needed
+        ]);
 
          if($leaveRequests->count() > 0){
             
@@ -25,5 +32,8 @@ class LeaveRequestController extends Controller
                 'leaverequest'=>$leaveRequests
             ], 200);
         }
+    }
+    public function updateData(Request $request){
+        die("updateData");
     }
 }

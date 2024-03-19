@@ -12,6 +12,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 import axios from "axios";
 
 interface LeaveRequest {
@@ -22,22 +23,21 @@ interface LeaveRequest {
   status: string;
 }
 
-function createData(
-  id: string,
-  name: string,
-  leaveTypes: string,
-  dayRequested: string,
-  status: string
-): LeaveRequest {
-  return { id, name, leaveTypes, dayRequested, status };
-}
-
 export default function DenseTable() {
   const url = "http://127.0.0.1:8000/api/leaveRequests";
   const [data, setData] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [selectedId, setSelectedId] = useState("");
+  const [formData, setFormData] = useState<LeaveRequest>({
+    id: "",
+    name: "",
+    leaveTypes: "",
+    dayRequested: "",
+    status: "",
+  });
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     axios
@@ -47,13 +47,17 @@ export default function DenseTable() {
         setLoading(false);
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
         setLoading(false);
       });
   }, []);
 
   const handleOpenModal = (id: string) => {
     setSelectedId(id);
+    const selectedRow = data.find((row) => row.id === id);
+    if (selectedRow) {
+      setFormData({ ...selectedRow });
+    }
     setOpenModal(true);
   };
 
@@ -61,7 +65,46 @@ export default function DenseTable() {
     setOpenModal(false);
   };
 
-  console.log(data);
+  const handleUpdateData = async () => {
+    try {
+      setUpdating(true);
+      setError(null);
+  
+      // Make a PUT request to update data on the server
+      // const res = await axios.put(`http://127.0.0.1:8000/update-data/${selectedId}`, formData);
+      
+      const res = await axios.put('http://127.0.0.1:8000/update-data' + formData, {
+        key1: 'value1',
+        key2: 'value2',
+      }, {
+        headers: {
+          'Authorization': 'Bearer your_token',
+        },
+      })
+      if (res.data.status === 200) {
+        console.log(res.data.message);
+  
+        // Reset the form data
+        setFormData({
+          id: "",
+          name: "",
+          leaveTypes: "",
+          dayRequested: "",
+          status: "",
+        });
+      }
+  
+      // Optionally, you can fetch updated data after the update
+      // fetchData();
+  
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error:', error);
+      setError('Error updating data. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -86,9 +129,7 @@ export default function DenseTable() {
                 key={row.id}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                <TableCell component="th" scope="row">
-                  {row.id}
-                </TableCell>
+                <TableCell component="th" scope="row">{row.id}</TableCell>
                 <TableCell align="right">{row.name}</TableCell>
                 <TableCell align="right">{row.leaveTypes}</TableCell>
                 <TableCell align="right">{row.dayRequested}</TableCell>
@@ -106,15 +147,47 @@ export default function DenseTable() {
 
       {/* Modal */}
       <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>Modal Title</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Modal content for ID: {selectedId}
-          </DialogContentText>
+        <DialogTitle>Update Leave Request</DialogTitle>
+        <DialogContent style={{ paddingTop: '10px' }}>
+          <form style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <TextField
+              label="Employee Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              style={{ padding: '5px' }}
+            />
+            <TextField
+              label="Leave Type"
+              value={formData.leaveTypes}
+              onChange={(e) => setFormData({ ...formData, leaveTypes: e.target.value })}
+              style={{ padding: '5px' }}
+            />
+            <TextField
+              label="Pending Date"
+              value={formData.dayRequested}
+              onChange={(e) => setFormData({ ...formData, dayRequested: e.target.value })}
+              style={{ padding: '5px' }}
+            />
+            <TextField
+              label="Status"
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              style={{ padding: '5px' }}
+            />
+          </form>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Close</Button>
+          <Button onClick={handleUpdateData} color="primary" disabled={updating}>
+            {updating ? 'Updating...' : 'Update Data'}
+          </Button>
         </DialogActions>
+
+        {error && (
+          <DialogContent>
+            <DialogContentText color="error">{error}</DialogContentText>
+          </DialogContent>
+        )}
       </Dialog>
     </>
   );
